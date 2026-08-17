@@ -1,0 +1,12 @@
+// Original decorative sprites, procedurally generated. TREE_SPRITE is
+// taller than one tile on purpose - it's rendered overlapping the tile
+// above the forest tile it belongs to, so the canopy visibly pokes up
+// above neighboring tiles. That's the real cue that reads as height/
+// angle in RPG tile art, more than shading alone. GROUND_SHADOW goes
+// under the hero and quest markers so they look grounded on their
+// tile instead of floating.
+
+export const TREE_SPRITE = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAGAAAACQCAYAAAD3Cm4hAAADmUlEQVR42u2dPWvbUBSGrWCKyGCEB2MyBJEhhIz9FaVTx9KpdMpPypipdOrYn9ExZDLGQygeijAhGA9W1+oa9HI4V9aV8zybkKIPvznvuedIuhqNAADgrZKldkI3dzf1/8vb7baxviiKUdt6Rbj98mHZ629wxv9gvyAAApADkvL4PM9bl5Wnq/2p9SFP908ZEYAFAQKQA+J4vvLcqqpcOcFaB/SdE4gALAgBoEfGxz6gtXcTe3+qt9T1+RIBWBAgwCnXAeXXsm7zWO84PFwf1g2xPV0dz3s/gQjAghAATqkOCD1Y9XbU9srTlUdbPd67PyIACwIEeEt1wPW368a4f7ffmcb1fWP1/HD7181rY3n1fZURAVgQIMCp5oDLL5et93jPJ+eN5dj9elVXxPZ4tf/n1XPr9ionEAFYEAJAj7h7QaGnhnWA8tgQdf8gdl2hnh1VqF4VEYAFAQIMuQ4Iez3qnu50NnV5rtXjVV0QO4eoXpCqM9Y/1xkRgAUBAgylDlD3aMf7cavnWp/T8faCvM8ZqfM7+AHfjV05hgjAghAAUs4Boce//H0xeW41qqJ6srd3o/5eXc+m2rSuD3MCEYAFAQIkzEEv6OLThWsuh3D7WTlz1QHKw73vHVvrht3W9tyTuh4iAAtCAEipDrB6oup/b/40x837fN+6ver9eM/Xul6N+705kgjAghAA+qwDph+mdZcep57NDNdP5pNOL/jQg89M52/NOdQBWBAgwJDqgNjjcus4fL1cN5bn5bz1+N65KNT5xq4ziAAsCBAgpRxg9fiu51izjru9Ocf6PQJvHRAejwjAghAAUqoDrJ5mHfcqj7W+I2adQy7cn3euau/xiQAsCAGgzxzgncfTur21jijmtjrFWmd4c6C3V0QEYEEIACnVAdZxu/cbL8d+7kddT+y6QO2fCMCCEABSygGx39Hy9uu7ni+o63fMqAOwIECAhDl4R+zq81Xt8UjvuF3OHRH0hmLnAG//n/cDsCBAgCHXAV1/O/HY43zvuF6t9z4nRQRgQQgAKdUBIeHcEbHn6/HmiLyI+23Jrr83vHhYMG8oFgQIMJgcoAh7R957qtJDfyxM53x7d2s6P+898Mf7R74jhgUBAgAAAAAAAKRKlvoJfnxf1p6///V7mfQ1UgkjAAIAAiAAIAACAAIgACAAAgACIAAgAAIAAiAAIAACAAIgACAAAgACIAAgAAIAAiAAIAACQAT+Aeq634KTwoBIAAAAAElFTkSuQmCC';
+export const GROUND_SHADOW = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAGAAAAAoCAYAAAABk/85AAAAhUlEQVR42u3agQ0AERBEUa5MBarzirhg7L3fgMS3MyRaAwD8lX5gzRG+J3PnYo8zeBYCCNAB1TM9ujNMgAgiAOEdMGzTuo4wASKIAIR1gMzf2AkmQAQRAAIIAAEEIOQd4F2w8N5vAkQQCLisA3TEh4w3ASIIBBTvgGqd4W+oCAIBAABU5wVFsQc6PzLT1QAAAABJRU5ErkJggg==';
+export const TREE_HEIGHT = 36; // vs the 24px tile size - the extra 12px is the overhang
+export const TREE_WIDTH = 24;
