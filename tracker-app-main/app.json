@@ -23,7 +23,9 @@
       "predictiveBackGestureEnabled": false,
       "package": "com.demarcus3456.trackerapp",
       "googleServicesFile": "./google-services.json",
-      "permissions": ["com.android.alarm.permission.SET_ALARM"]
+      "permissions": [
+        "com.android.alarm.permission.SET_ALARM"
+      ]
     },
     "plugins": [
       "@react-native-google-signin/google-signin",
