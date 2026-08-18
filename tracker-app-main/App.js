@@ -578,6 +578,17 @@ function MainApp() {
         </TouchableOpacity>
       ) : null}
 
+      {!saveError && cloudSyncError ? (
+        <TouchableOpacity
+          style={styles.cloudSyncErrorBanner}
+          onPress={() => setTab('settings')}
+        >
+          <Text style={styles.saveErrorText} numberOfLines={2}>
+            ⚠️ Cloud backup failed: {cloudSyncError} — tap for details
+          </Text>
+        </TouchableOpacity>
+      ) : null}
+
       <View style={{ flex: 1 }}>
         {tab === 'calendar' && (
           <CalendarScreen
@@ -711,6 +722,8 @@ function MainApp() {
           <SettingsScreen
             googleUser={googleUser}
             setGoogleUser={setGoogleUser}
+            applyFullPayload={applyFullPayload}
+            getLatestPayload={() => latestPayloadRef.current}
             setLevel={setLevel}
             setStats={setStats}
             setRewardPoints={setRewardPoints}
@@ -875,6 +888,11 @@ const styles = StyleSheet.create({
     paddingHorizontal: 14,
   },
   saveErrorText: { color: '#fff', fontSize: 12, fontWeight: '700', textAlign: 'center' },
+  cloudSyncErrorBanner: {
+    backgroundColor: '#7a5a20',
+    paddingVertical: 10,
+    paddingHorizontal: 14,
+  },
   drawer: {
     width: DRAWER_WIDTH,
     backgroundColor: '#0c0a0a',

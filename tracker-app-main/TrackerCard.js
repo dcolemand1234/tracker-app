@@ -42,6 +42,10 @@ export default function TrackerCard({
 }) {
   const [flipped, setFlipped] = useState(false);
   const anim = useRef(new Animated.Value(0)).current;
+  // maxresdefault.jpg is the true 1280x720 thumbnail with no baked-in
+  // letterboxing - but it doesn't exist for every video, so fall back
+  // to the always-available hqdefault.jpg if it 404s.
+  const [useMaxRes, setUseMaxRes] = useState(true);
 
   function flip() {
     Animated.spring(anim, {
@@ -77,7 +81,11 @@ export default function TrackerCard({
       >
         {/* FRONT */}
         <Animated.View
-          style={[styles.face, { transform: [{ rotateY: frontRotate }] }]}
+          style={[
+            styles.face,
+            hasVideo && styles.cardSlotVideoBorder,
+            { transform: [{ rotateY: frontRotate }] },
+          ]}
         >
           <View style={styles.poster}>
             {item.image ? (
@@ -85,9 +93,12 @@ export default function TrackerCard({
             ) : hasVideo ? (
               <>
                 <Image
-                  source={{ uri: `https://img.youtube.com/vi/${ytId}/hqdefault.jpg` }}
+                  source={{
+                    uri: `https://img.youtube.com/vi/${ytId}/${useMaxRes ? 'maxresdefault' : 'hqdefault'}.jpg`,
+                  }}
                   style={styles.posterImg}
                   resizeMode="cover"
+                  onError={() => setUseMaxRes(false)}
                 />
                 <View style={styles.playButtonWrap}>
                   <View style={styles.playButton}>
@@ -277,7 +288,21 @@ const styles = StyleSheet.create({
   // the same tall movie-poster ratio as cover art means most of the
   // card is empty black letterboxing. A more landscape ratio here lets
   // the actual video frame fill the space instead of getting lost in it.
-  cardSlotVideo: { aspectRatio: 16 / 11 },
+  cardSlotVideo: {
+    aspectRatio: 16 / 11,
+    alignSelf: 'flex-start',
+    borderRadius: 14,
+    shadowColor: '#bc9440',
+    shadowOpacity: 0.35,
+    shadowRadius: 10,
+    shadowOffset: { width: 0, height: 4 },
+    elevation: 6,
+  },
+  cardSlotVideoBorder: {
+    borderWidth: 1,
+    borderColor: 'rgba(188,148,64,0.55)',
+    borderRadius: 14,
+  },
   touchArea: { flex: 1 },
   face: {
     position: 'absolute',

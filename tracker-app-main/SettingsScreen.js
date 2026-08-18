@@ -5,7 +5,7 @@ import {
   isErrorWithCode,
   statusCodes,
 } from '@react-native-google-signin/google-signin';
-import { signInToFirebaseWithGoogle, signOutOfFirebase } from './firebaseSync';
+import { signInToFirebaseWithGoogle, signOutOfFirebase, pullBackupFromCloud, pushBackupToCloud, currentFirebaseUid } from './firebaseSync';
 import { resetRoadmapProgress } from './leveling';
 import { resetTodayHabits } from './habitUtils';
 import { sendTestNotification, getScheduledSummary, resyncAllHabitNotifications } from './notifications';
@@ -61,8 +61,15 @@ export default function SettingsScreen({
   saveBytes,
   meditationSettings,
   setMeditationSettings,
+  applyFullPayload,
+  cloudSyncError,
+  getLatestPayload,
 }) {
   const [busy, setBusy] = useState(false);
+  const [restoreBusy, setRestoreBusy] = useState(false);
+  const [restoreStatus, setRestoreStatus] = useState('');
+  const [pushBusy, setPushBusy] = useState(false);
+  const [pushStatus, setPushStatus] = useState('');
   const [colorError, setColorError] = useState('');
   const [notifStatus, setNotifStatus] = useState('');
 
@@ -175,6 +182,62 @@ export default function SettingsScreen({
         },
       },
     ]);
+  }
+
+  async function handlePush() {
+    setPushBusy(true);
+    setPushStatus('Backing up to cloud...');
+    try {
+      const payload = getLatestPayload ? getLatestPayload() : null;
+      if (!payload) {
+        setPushStatus('Nothing to back up yet - make a change first.');
+        return;
+      }
+      await pushBackupToCloud(payload);
+      setPushStatus('Backed up to cloud just now.');
+    } catch (e) {
+      setPushStatus('Backup failed: ' + e.message);
+    } finally {
+      setPushBusy(false);
+    }
+  }
+
+  async function handleRestore() {
+    setRestoreBusy(true);
+    const uid = currentFirebaseUid();
+    setRestoreStatus(`Checking cloud backup for uid: ${uid || '(none - not signed in)'}...`);
+    try {
+      const cloudData = await pullBackupFromCloud();
+      if (!cloudData) {
+        setRestoreStatus(
+          `No backup document found at trackerBackups/${uid}. ` +
+            'If that uid doesn\'t match what you see in the Firebase console, this is a sign-in/account issue, not missing data.'
+        );
+        return;
+      }
+      setRestoreStatus('');
+      Alert.alert(
+        'Restore from cloud?',
+        'This replaces everything currently in this app with your latest cloud backup. Anything only on this device that never made it to the cloud will be lost.',
+        [
+          { text: 'Cancel', style: 'cancel' },
+          {
+            text: 'Restore',
+            style: 'destructive',
+            onPress: () => {
+              applyFullPayload(cloudData);
+              setRestoreStatus('Restored from cloud backup.');
+            },
+          },
+        ]
+      );
+    } catch (e) {
+      setRestoreStatus(
+        `Restore failed [uid: ${uid || 'none'}]${e.code ? ` (${e.code})` : ''}: ${e.message}`
+      );
+    } finally {
+      setRestoreBusy(false);
+    }
   }
 
   function resetGame() {
@@ -310,8 +373,46 @@ export default function SettingsScreen({
             <Text style={styles.sectionLabel}>Cloud Sync</Text>
             <Text style={[shared.tagline, { marginBottom: 12 }]}>
               Your data syncs to the cloud automatically whenever you're
-              signed in - nothing to tap.
+              signed in and change something - the button below is only
+              for forcing an immediate backup and seeing it confirmed.
             </Text>
+            {cloudSyncError ? (
+              <Text style={{ color: ROSE, fontSize: 12, marginBottom: 10 }}>
+                ⚠️ Last automatic sync failed: {cloudSyncError}
+              </Text>
+            ) : null}
+            <TouchableOpacity
+              style={styles.signOutBtn}
+              disabled={pushBusy}
+              onPress={handlePush}
+            >
+              <Text style={styles.signOutBtnText}>
+                {pushBusy ? 'Backing up...' : 'Backup to Cloud'}
+              </Text>
+            </TouchableOpacity>
+            {pushStatus ? (
+              <Text style={{ color: pushStatus.includes('failed') ? ROSE : INK, marginTop: 4, marginBottom: 8 }}>
+                {pushStatus}
+              </Text>
+            ) : null}
+            <TouchableOpacity
+              style={[styles.signOutBtn, { marginTop: 8 }]}
+              disabled={restoreBusy}
+              onPress={handleRestore}
+            >
+              <Text style={styles.signOutBtnText}>
+                {restoreBusy ? 'Checking...' : 'Restore from Cloud'}
+              </Text>
+            </TouchableOpacity>
+            <Text style={[shared.tagline, { marginTop: 8, marginBottom: 4 }]}>
+              Restore pulls your latest cloud backup back down - use it if
+              local data was ever wiped (e.g. after clearing app storage).
+            </Text>
+            {restoreStatus ? (
+              <Text style={{ color: restoreStatus.includes('failed') ? ROSE : INK, marginTop: 4 }}>
+                {restoreStatus}
+              </Text>
+            ) : null}
           </View>
         ) : null}
 

@@ -100,8 +100,21 @@ export async function pullBackupFromCloud() {
   // exists is a METHOD in the modular API, not a property like it was
   // in the old namespaced style - a easy thing to get wrong silently.
   if (!manifestSnap.exists()) return null;
-  const chunkCount = manifestSnap.data()?.chunkCount || 0;
-  if (chunkCount === 0) return null;
+  const manifestData = manifestSnap.data();
+  const chunkCount = manifestData?.chunkCount || 0;
+
+  if (chunkCount === 0) {
+    // Backwards compatibility: backups written before the chunked-
+    // storage migration stored the full payload directly under a
+    // `data` field on this same manifest document, with no
+    // chunkCount at all. Treating that as "no backup" would silently
+    // throw away a perfectly good pre-migration backup - read it the
+    // old way instead.
+    if (manifestData && manifestData.data) {
+      return manifestData.data;
+    }
+    return null;
+  }
 
   const chunkSnaps = await Promise.all(
     Array.from({ length: chunkCount }, (_, i) => getDoc(doc(db, ...chunksCollectionPath(uid), String(i))))
