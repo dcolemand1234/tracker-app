@@ -1,4 +1,4 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { View, Text, TouchableOpacity, Image, Animated, StyleSheet, Linking } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { INK, DIM, CARD, BORDER } from './theme';
@@ -47,6 +47,38 @@ export default function TrackerCard({
   // to the always-available hqdefault.jpg if it 404s.
   const [useMaxRes, setUseMaxRes] = useState(true);
 
+  // Poster art comes in all kinds of aspect ratios - forcing every one
+  // into the same fixed box is what was cropping (with cover) or
+  // letterboxing (with contain) images that didn't match it. Reading
+  // the image's real width/height and using THAT as the card's aspect
+  // ratio means the box always matches the picture exactly, so nothing
+  // gets cut off or padded with black bars. Falls back to the old
+  // movie-poster ratio (2:3-ish) until the real size loads, or if it
+  // fails to load at all.
+  const FALLBACK_RATIO = 3 / 4.9;
+  const [posterRatio, setPosterRatio] = useState(FALLBACK_RATIO);
+  useEffect(() => {
+    if (!item.image) {
+      setPosterRatio(FALLBACK_RATIO);
+      return;
+    }
+    let cancelled = false;
+    Image.getSize(
+      item.image,
+      (w, h) => {
+        if (!cancelled && w > 0 && h > 0) setPosterRatio(w / h);
+      },
+      () => {
+        // Couldn't read real dimensions (bad url, network, etc.) -
+        // just keep the fallback ratio rather than leaving it broken.
+        if (!cancelled) setPosterRatio(FALLBACK_RATIO);
+      }
+    );
+    return () => {
+      cancelled = true;
+    };
+  }, [item.image]);
+
   function flip() {
     Animated.spring(anim, {
       toValue: flipped ? 0 : 1,
@@ -71,7 +103,7 @@ export default function TrackerCard({
   const finished = epTotal > 0 && epCurrent >= epTotal;
 
   return (
-    <View style={[styles.cardSlot, hasVideo && styles.cardSlotVideo]}>
+    <View style={[styles.cardSlot, hasVideo && styles.cardSlotVideo, item.image && { aspectRatio: posterRatio }]}>
       <TouchableOpacity
         style={styles.touchArea}
         activeOpacity={0.9}
@@ -91,21 +123,14 @@ export default function TrackerCard({
             {item.image ? (
               <Image source={{ uri: item.image }} style={styles.posterImg} resizeMode="contain" />
             ) : hasVideo ? (
-              <>
-                <Image
-                  source={{
-                    uri: `https://img.youtube.com/vi/${ytId}/${useMaxRes ? 'maxresdefault' : 'hqdefault'}.jpg`,
-                  }}
-                  style={styles.posterImg}
-                  resizeMode="cover"
-                  onError={() => setUseMaxRes(false)}
-                />
-                <View style={styles.playButtonWrap}>
-                  <View style={styles.playButton}>
-                    <View style={styles.playButtonTriangle} />
-                  </View>
-                </View>
-              </>
+              <Image
+                source={{
+                  uri: `https://img.youtube.com/vi/${ytId}/${useMaxRes ? 'maxresdefault' : 'hqdefault'}.jpg`,
+                }}
+                style={styles.posterImg}
+                resizeMode="cover"
+                onError={() => setUseMaxRes(false)}
+              />
             ) : (
               <View style={[styles.posterImg, styles.posterPlaceholder, { backgroundColor: color }]}>
                 <Text style={styles.posterLetter}>{(item.title || '?').charAt(0).toUpperCase()}</Text>
@@ -289,7 +314,8 @@ const styles = StyleSheet.create({
   // card is empty black letterboxing. A more landscape ratio here lets
   // the actual video frame fill the space instead of getting lost in it.
   cardSlotVideo: {
-    aspectRatio: 16 / 11,
+    width: '100%',
+    aspectRatio: 16 / 9,
     alignSelf: 'flex-start',
     borderRadius: 14,
     shadowColor: '#bc9440',
@@ -312,23 +338,7 @@ const styles = StyleSheet.create({
     overflow: 'hidden',
   },
   poster: { flex: 1, backgroundColor: CARD },
-  posterImg: { width: '100%', height: '100%', backgroundColor: '#0a0a0a' },
-  playButtonWrap: {
-    position: 'absolute', top: 0, left: 0, right: 0, bottom: 0,
-    alignItems: 'center', justifyContent: 'center',
-  },
-  playButton: {
-    width: 52, height: 52, borderRadius: 26,
-    backgroundColor: 'rgba(0,0,0,0.55)',
-    borderWidth: 2, borderColor: 'rgba(255,255,255,0.85)',
-    alignItems: 'center', justifyContent: 'center',
-  },
-  playButtonTriangle: {
-    width: 0, height: 0, marginLeft: 4,
-    borderTopWidth: 10, borderTopColor: 'transparent',
-    borderBottomWidth: 10, borderBottomColor: 'transparent',
-    borderLeftWidth: 16, borderLeftColor: '#fff',
-  },
+  posterImg: { width: '100%', height: '100%', backgroundColor: CARD },
   posterPlaceholder: { alignItems: 'center', justifyContent: 'center' },
   posterLetter: { color: '#fff', fontSize: 40, fontWeight: '800' },
   posterScrim: {

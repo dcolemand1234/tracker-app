@@ -1,0 +1,22 @@
+rules_version = '2';
+
+// The chunked cloud backup (see firebaseSync.js) writes to two places
+// in one atomic batch:
+//   trackerBackups/{userId}                  <- manifest (chunkCount, updatedAt)
+//   trackerBackups/{userId}/chunks/{chunkId}  <- the actual backup data
+//
+// Rules are NOT recursive: a rule on trackerBackups/{userId} does not
+// automatically extend to documents underneath it. Both matches are
+// required, or writes to the chunks subcollection get denied - which
+// fails the whole batch, including the manifest write.
+service cloud.firestore {
+  match /databases/{database}/documents {
+    match /trackerBackups/{userId} {
+      allow read, write: if request.auth != null && request.auth.uid == userId;
+
+      match /chunks/{chunkId} {
+        allow read, write: if request.auth != null && request.auth.uid == userId;
+      }
+    }
+  }
+}
